@@ -2,31 +2,77 @@ class Circle {
   constructor(parent, totalNodes) {
     this._parent = parent;
     this._totalNodes = totalNodes;
-    this._noteGroups = [];
+    this._groups = {};
     this._tonicIndex = 0;
+  }
+
+  rotateTo(groups) {
+    groups.forEach((group, i) => {
+      group.rotateTo(i);
+    });
+  }
+
+  get groups() {
+    return this._groups;
   }
 
   get parent() {
     return this._parent;
   }
 
+  get tonicIndex() {
+    return this._tonicIndex;
+  }
+
   get totalNodes() {
     return this._totalNodes;
   }
 
-  AddNoteGroup(noteGroup) {
-    this._noteGroups.push(noteGroup);
+  set tonicIndex(value) {
+    this._tonicIndex = value;
   }
 
-  getNoteGroupFromTonic() {
-    return this._noteGroups.slice(this._tonicIndex).concat(this._noteGroups.slice(0, this._tonicIndex));
+  /**
+   * @description Adds (if key does not exist already) or appends (if key exists) a group to the groups container by key.
+   * @param {string} groupKey
+   * @param {NoteGroup[]} group
+   * @returns {undefined}
+   */
+  addGroup(key, group) {
+    if (this.groups.hasOwnProperty(key)) {
+      this.groups[key].push(group);
+      return;
+    }
+    this.groups[key] = [group];
+  }
+
+  /**
+   * @description returns group by key, starting from index 0
+   * @param {string} key
+   * @returns {Group[]}
+   */
+  getGroups(key) {
+    return this.groups[key];
+  }
+
+  /**
+   * @description returns group by key, starting from the passed index and wrapping around to provide all elements
+   * @param {string} key
+   * @param {number} index
+   * @returns {Group[]}
+   */
+  getGroupsFromIndex(key, index) {
+    return this.groups[key].slice(index).concat(this.groups[key].slice(0, index));
   }
 }
 
-class NoteGroup {
-  constructor(arm, note, connector) {
+class Group {
+  constructor(position, arm, main, connector, totalNodes) {
+    this._position = position;
+    this._totalNodes = totalNodes;
+    this._rotation = Math.round((360 / totalNodes) * position - 90);
     this._arm = arm;
-    this._note = note;
+    this._main = main;
     this._connector = connector;
   }
 
@@ -38,59 +84,77 @@ class NoteGroup {
     return this._connector;
   }
 
-  get note() {
-    return this._note;
+  get main() {
+    return this._main;
   }
 
-  set note(value) {
-    this._note = value;
+  get position() {
+    return this._position;
+  }
+
+  get rotation() {
+    return this._rotation;
+  }
+
+  get totalNodes() {
+    return this._totalNodes;
+  }
+
+  set main(value) {
+    this._main = value;
+  }
+
+  set position(value) {
+    this._position = value;
+  }
+
+  set rotation(value) {
+    this._rotation = value;
+  }
+
+  rotateTo(position) {
+    const moveDistance = this.position >= position ? this.position - position : this.position + 12 - position;
+    const [directionPri, directionSec] = moveDistance <= 6 ? ["_ccw", "_cw"] : ["_cw", "_ccw"];
+    this.position = position;
+    this.rotation = Math.round((360 / this.totalNodes) * position - 90);
+    gsap.to(this.arm.element, { rotation: `${this.rotation}${directionPri}`, duration: 2 });
+    gsap.to(this.main.element, { rotation: `${-this.rotation}${directionSec}`, duration: 2 });
+    gsap.to(this.connector.element, { rotation: `${-this.rotation}${directionSec}`, duration: 2 });
   }
 }
 
 class Arm {
-  constructor(parent, position, totalNodes, length) {
-    this._position = position;
-    this._rotation = Math.round((360 / totalNodes) * position - 90);
-    this._element = this._createElement(parent, length);
+  constructor(parent, className, index, rotation, length) {
+    this._element = this._createElement(parent, className, index, rotation, length);
   }
 
-  _createElement(parent, length) {
+  _createElement(parent, className, index, rotation, length) {
     const element = document.createElement("div");
-    element.className = "arm";
-    element.dataset.index = this.position;
+    element.className = className;
+    element.dataset.index = index;
     element.style.width = `${length}px`;
 
-    gsap.set(element, { rotation: this.rotation });
+    gsap.set(element, { rotation: rotation });
     parent.appendChild(element);
     return element;
   }
 
   get element() {
     return this._element;
-  }
-
-  get position() {
-    return this._position;
-  }
-
-  get rotation() {
-    return this._rotation;
   }
 }
 
 class Connector {
-  constructor(parent, position, totalNodes) {
-    this._position = position;
-    this._rotation = -Math.round((360 / totalNodes) * position - 90);
-    this._element = this._createElement(parent);
+  constructor(parent, index, rotation) {
+    this._element = this._createElement(parent, index, rotation);
   }
 
-  _createElement(parent) {
+  _createElement(parent, index, rotation) {
     const element = document.createElement("div");
     element.className = "connector";
-    element.dataset.index = this.position;
+    element.dataset.index = index;
 
-    gsap.set(element, { rotation: this.rotation });
+    gsap.set(element, { rotation: rotation });
     parent.appendChild(element);
     return element;
   }
@@ -98,32 +162,30 @@ class Connector {
   get element() {
     return this._element;
   }
-
-  get position() {
-    return this._position;
-  }
-
-  get rotation() {
-    return this._rotation;
-  }
 }
 
-class Note {
-  constructor(parent, position, totalNodes, size) {
-    this._position = position;
-    this._rotation = -Math.round((360 / totalNodes) * position - 90);
-    [this._element, this._text] = this._createElement(parent, size);
+class Main {
+  /**
+   * @description constructor for main element in group (i.e. the element that has the text)
+   * @param {HTMLElement} parent parent HTML element to which the new element is to be appended
+   * @param {string} className class to be added to the HTML element
+   * @param {number} index index of the object
+   * @param {number} rotation rotation to be applied to the object
+   * @param {number} size single number for width and height of the HTML element
+   */
+  constructor(parent, className, index, rotation, size) {
+    [this._element, this._text] = this._createElement(parent, className, index, rotation, size);
   }
 
-  _createElement(parent, size) {
+  _createElement(parent, className, index, rotation, size) {
     const element = document.createElement("div");
-    element.className = "note";
-    element.dataset.index = this.position;
+    element.className = className;
+    element.dataset.index = index;
     element.style.width = `${size}px`;
     element.style.height = `${size}px`;
     element.style.top = `-${size / 2}px`;
     element.style.left = "100%";
-    gsap.set(element, { rotation: this.rotation });
+    gsap.set(element, { rotation: rotation });
     const span = document.createElement("span");
     span.textContent = "";
     span.classList.add("text");
@@ -136,14 +198,6 @@ class Note {
     return this._element;
   }
 
-  get position() {
-    return this._position;
-  }
-
-  get rotation() {
-    return this._rotation;
-  }
-
   set text(newText) {
     this._text.textContent = newText;
   }
@@ -154,10 +208,17 @@ const totalNodes = 12;
 export const circle = new Circle(centre, totalNodes);
 
 for (let i = 0; i < circle.totalNodes; i++) {
-  const arm = new Arm(circle.parent, i, circle.totalNodes, 175);
-  const note = new Note(arm.element, i, circle.totalNodes, 70);
-  const connector = new Connector(arm.element, i, circle.totalNodes);
-  const noteGroup = new NoteGroup(arm, note, connector);
+  const rotation = Math.round((360 / totalNodes) * i - 90);
 
-  circle.AddNoteGroup(noteGroup);
+  const noteArm = new Arm(circle.parent, 'arm', i, rotation, 175);
+  const noteMain = new Main(noteArm.element, "note", i, -rotation, 70);
+  const noteConnector = new Connector(noteArm.element, i, -rotation);
+  const noteGroup = new Group(i, noteArm, noteMain, noteConnector, circle.totalNodes);
+  circle.addGroup("notes", noteGroup);
+
+  const labelArm = new Arm(circle.parent, 'arm', i, rotation, 280);
+  const labelMain = new Main(labelArm.element, "label", i, -rotation, 50);
+  const labelConnector = new Connector(labelArm.element, i, -rotation);
+  const labelGroup = new Group(i, labelArm, labelMain, labelConnector, circle.totalNodes);
+  circle.addGroup("labels", labelGroup);
 }

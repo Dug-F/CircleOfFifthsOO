@@ -34,28 +34,23 @@
 
   </div>
 
-  <div class="buttons-container hidden" >
-    <button class="rotateNoteTest">Rotate Note</button>
+  <div class="buttons-container" >
+    <button class="rotateArmTest">Rotate Arm</button>
     <button class="rotateLabelTest">Rotate Label</button>
     <button class="show-status">Show status</button>
     <input id="input-offset" type="text" name="offset" placeholder="offset" value="0">
   </div>
 
   <div class="scripts">
-    <!-- <script type="module" src="./scripts/animations.js"></script>
-    <script type="module" src="./scripts/dataStructure.js"></script>
-    <script type="module" src="./scripts/helperFunctions.js"></script>
-    <script type="module" src="./scripts/rotations.js"></script>
-    <script type="module" src="./scripts/drawChords.js"></script>
-    <script type="module" src="./scripts/contextMenu.js"></script>
-    <script type="module" src="./scripts/createElements.js"></script>
-    <script type="module" src="./scripts/eventListeners.js"></script> -->
     <script type="module" src="./scripts/scripts.js"></script>
-
+    <script type="module">
+      import {rotateArm} from "./scripts/scripts.js";
+      function rotateArmTest() {
+        rotateArm();
+      }
+    </script>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-
-    <!-- <script src="./scripts/contextMenu.js"></script> -->
-    <!-- <script src="./scripts/toggleMajorMinor.js"></script> -->
   </div>
   </body>
 </html>

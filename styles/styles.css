@@ -170,20 +170,18 @@ svg {
 .innerLabel-arm {
     width: 300px;
 }
-/* 
-.bubble {
+
+/* .bubble {
     display: flex;
     position: absolute;
     visibility: visible;
     border: none;
-    background-color: #0352fc;
     color: white;
     border-radius: 50%;
     font-weight: bold;
     justify-content: center;
     align-items: center;
     font-size: 1.1rem;
-    transition: opacity 0.4s ease;
     opacity: 1;
     white-space: pre;
 } */
@@ -206,7 +204,7 @@ svg {
     opacity: 1;
 }
 
-.note {
+.note, .label {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -215,31 +213,32 @@ svg {
     position: absolute;
     visibility: visible;
     border: none;
-    background-color: #0352fc;
-    /* background-image: linear-gradient(#0352fc,#0025 5%);  */
-    color: white;
     border-radius: 50%;
     font-weight: bold;
     font-size: 1.1rem;
-    transition: opacity 0.4s ease;
     opacity: 1;
     white-space: pre;
 }
 
-.label1 {
-    left: 235px;
-    top: -25px;
-    height: 50px;
-    width: 50px;
+.note {
+    background-color: #0352fc;
+    color: white;
+}
+
+.label {
     background-color: transparent;
     color: black;
 }
 
-.label {
-    left: 255px;
+.note span {
+  pointer-events: none;
+}
+
+.label1 {
+    /* left: 235px;
     top: -25px;
     height: 50px;
-    width: 50px;
+    width: 50px; */
     background-color: transparent;
     color: black;
 }
